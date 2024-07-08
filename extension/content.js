@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const tweets = node.querySelectorAll('article div[lang]');
       tweets.forEach((tweet) => {
         const text = tweet.innerText;
-        fetch('https://your-api-domain/analyze', {
+        fetch('http://127.0.0.1:5000/predict', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
