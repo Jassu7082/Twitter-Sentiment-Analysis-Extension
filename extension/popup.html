@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Twitter Sentiment Analysis</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 10px;
+    }
+    h1 {
+      font-size: 18px;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 5px;
+      margin: 5px 0;
+      box-sizing: border-box;
+    }
+    input[type="submit"] {
+      width: 100%;
+      padding: 5px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    input[type="submit"]:hover {
+      background-color: #45a049;
+    }
+    #result {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Twitter Sentiment Analysis Extension</h1>
+  <form id="sentiment-form">
+    <input type="text" id="tweet-text" placeholder="Enter text to analyze" required>
+    <input type="submit" value="Analyze Sentiment">
+  </form>
+  <div id="result"></div>
+  <script src="popup.js"></script>
+</body>
+</html>

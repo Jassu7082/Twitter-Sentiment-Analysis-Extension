@@ -1,36 +1,47 @@
-from flask import Flask, render_template, request
-import joblib
-from text_preprocessing import preprocess_text
+from flask import Flask, request, jsonify
+import torch
+import torch.nn as nn
+import pickle
+from tensorflow.keras.preprocessing.sequence import pad_sequences
+import numpy as np
+
+class SentimentBiLSTM(nn.Module):
+    def __init__(self, embedding_matrix, hidden_dim, output_size):
+        super(SentimentBiLSTM, self).__init__()
+        self.embedding = nn.Embedding.from_pretrained(torch.tensor(embedding_matrix, dtype=torch.float32), freeze=True)
+        self.lstm = nn.LSTM(embedding_matrix.shape[1], hidden_dim, bidirectional=True, batch_first=True)
+        self.fc = nn.Linear(hidden_dim * 2, output_size)
+    
+    def forward(self, x):
+        embeds = self.embedding(x)
+        lstm_out, _ = self.lstm(embeds)
+        lstm_out = lstm_out[:, -1]
+        out = self.fc(lstm_out)
+        return out
+
+# Load tokenizer and model
+with open('tokenizer.pkl', 'rb') as f:
+    tokenizer = pickle.load(f)
+
+embedding_matrix = np.load('embedding_matrix.npy')
+model = SentimentBiLSTM(embedding_matrix, hidden_dim=64, output_size=3)
+model.load_state_dict(torch.load('sentiment_model.pt'))
+model.eval()
 
 app = Flask(__name__)
 
-# Load model and vectorizer
-model_path = 'src/sentiment_analysis_model.joblib'
-vectorizer_path = 'src/models/tfidf_vectorizer.joblib'
-model = joblib.load(model_path)
-vectorizer = joblib.load(vectorizer_path)
-
-# Home route
-@app.route('/')
-def home():
-    return render_template('index.html')
-
-# Predict route
-@app.route('/predict', methods=['POST'])
-def predict():
-    tweet = request.form['tweet']
-
-    # Preprocess input text
-    processed_tweet = preprocess_text(tweet)
-
-    # Vectorize preprocessed text
-    vectorized_tweet = vectorizer.transform([processed_tweet]).toarray()
-
-    # Predict sentiment
-    prediction = model.predict(vectorized_tweet)[0]
-    sentiment = "Positive" if prediction == 1 else "Negative"
-
-    return render_template('result.html', tweet=tweet, sentiment=sentiment)
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    data = request.json
+    text = data['text']
+    sequences = tokenizer.texts_to_sequences([text])
+    padded = pad_sequences(sequences, maxlen=167)
+    inputs = torch.tensor(padded, dtype=torch.long)
+    with torch.no_grad():
+        outputs = model(inputs)
+        prediction = torch.argmax(outputs, dim=1).item()
+        sentiment = ['negative', 'neutral', 'positive'][prediction]
+    return jsonify({'sentiment': sentiment})
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000)
