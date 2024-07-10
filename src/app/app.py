@@ -9,7 +9,7 @@ from nltk.stem import WordNetLemmatizer
 from string import punctuation
 
 app = Flask(__name__)
-CORS(app, resources={r"/predict": {"origins": "chrome-extension://bgnimaldnhlmdcmmkajkgkedipafnioe"}})
+CORS(app)
 
 # Load model and vectorizer
 model_path = 'src/model_epoch_10.pth'
